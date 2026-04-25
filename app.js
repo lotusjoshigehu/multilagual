@@ -31,13 +31,30 @@ sequelize.sync({ alter: true })
 
 // ================= AUTH =================
 app.post("/signup", async (req, res) => {
-    const { name, email, password } = req.body;
+    try {
+        const { name, email, password } = req.body;
 
-    const exists = await User.findOne({ where: { email } });
-    if (exists) return res.status(409).json({ message: "User exists" });
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: "All fields required" });
+        }
 
-    await User.create({ name, email, password });
-    res.status(201).json({ message: "Signup success" });
+        const exists = await User.findOne({ where: { email } });
+
+        if (exists) {
+            return res.status(409).json({ message: "User exists" });
+        }
+
+        const user = await User.create({ name, email, password });
+
+        res.status(201).json({
+            message: "Signup success",
+            name: user.name   // 🔥 IMPORTANT (frontend needs this)
+        });
+
+    } catch (err) {
+        console.log("Signup Error:", err);
+        res.status(500).json({ message: "Server error" });
+    }
 });
 
 app.post("/login", async (req, res) => {
