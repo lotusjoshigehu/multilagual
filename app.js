@@ -25,8 +25,15 @@ app.use(express.static(__dirname));
 
 // ================= DB =================
 
-.then(() => console.log("Database synced"))
-.catch(err => console.log(err));
+// ================= DB =================
+(async () => {
+    try {
+        await sequelize.authenticate();
+        console.log("✅ Database connected");
+    } catch (err) {
+        console.log("❌ DB Error:", err.message);
+    }
+})();
 
 
 // ================= AUTH =================
@@ -57,16 +64,28 @@ app.post("/signup", async (req, res) => {
     }
 });
 
+
 app.post("/login", async (req, res) => {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
 
-    const user = await User.findOne({ where: { email } });
+        const user = await User.findOne({ where: { email } });
 
-    if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.password !== password)
-        return res.status(401).json({ message: "Wrong password" });
+        if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json({ message: "Login success" });
+        if (user.password !== password) {
+            return res.status(401).json({ message: "Wrong password" });
+        }
+
+        res.json({
+            message: "Login success",
+            name: user.name   // 🔥 FIX
+        });
+
+    } catch (err) {
+        console.log("Login Error:", err);
+        res.status(500).json({ message: "Server error" });
+    }
 });
 
 
