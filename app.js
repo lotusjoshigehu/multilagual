@@ -24,9 +24,7 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 // ================= DB =================
-sequelize.sync()
-.then(() => console.log("✅ Tables created"))
-.catch(err => console.log(err));
+
 // ================= DB =================
 (async () => {
     try {
