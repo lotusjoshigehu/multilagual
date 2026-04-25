@@ -1,0 +1,588 @@
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+}
+
+/* FULL SCREEN BODY */
+html, body {
+    height: 100%;
+    width: 100%;
+    background: #1f2a36;
+    color: white;
+    overflow: hidden;
+}
+
+/* MAIN LAYOUT */
+.main-container {
+    display: flex;
+    height: 100vh;
+    gap: 15px;
+    padding: 15px;
+
+    padding-left: 100px;    /* sidebar space */
+    padding-right: 250px;
+      
+
+    justify-content: center;   /* ✅ IMPORTANT */
+}
+
+.main-container.full {
+    margin-left: 0;
+    margin-right: 340px;
+    justify-content: center;
+}
+
+.video-section {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+
+    width: 100%;
+    margin-left: -20px;   /* ✅ now it will actually work */
+    max-width: 900px;
+}
+/* TOGGLE BUTTON */
+#menuToggle {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+
+    background: #0ea5e9;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+
+    z-index: 1000;
+}
+.sidebar {
+    width: 220px;
+    height: 100vh;
+
+    position: fixed;
+    left: 0;
+    top: 0;
+
+    background: #1e293b;
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    transition: transform 0.3s ease;
+    z-index: 10;
+}
+
+/* HIDDEN STATE */
+.sidebar.closed {
+    transform: translateX(-100%);
+}
+
+
+
+.sidebar button {
+    width: 100%;
+    padding: 12px;
+
+    background: #334155;
+    border: none;
+    border-radius: 10px;
+
+    color: white;
+    cursor: pointer;
+
+    text-align: left;
+    transition: 0.3s;
+}
+
+.sidebar button:hover {
+    background: #00c6ff;
+    color: black;
+}
+/* HIDE EMAIL INPUT */
+#myEmail {
+    display: none;
+}
+
+#videoContainer {
+    width: 100%;
+    height: 80vh;
+
+    background: black;
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+}
+/* LEFT → VIDEO */
+.video-box {
+    flex: 3;
+
+    /* REMOVE these */
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+    margin-top: 0;  
+    padding: 0; /* optional */
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+     
+
+}
+/* RIGHT → TRANSLATOR */
+.voice-box {
+    position: fixed;
+
+    top: 20px;
+    right: 20px;
+
+    width: 380px;        /* 🔥 fixed width */
+    height: calc(100vh - 40px);  /* full height with margin */
+
+    background: #2b3b4c;
+    padding: 20px;
+    border-radius: 15px;
+
+    overflow-y: auto;    /* scroll if content increases */
+
+    box-shadow: 0 0 15px rgba(0,198,255,0.3);
+}
+
+/* HEADINGS */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #00c6ff;
+}
+
+/* INPUT + SELECT */
+input, select {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    background: #2f3e4e;
+    color: white;
+    margin: 10px;
+}
+
+/* BUTTONS */
+button {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+    
+}
+
+button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(0,198,255,0.7);
+}
+
+/* VIDEO AREA */
+
+
+/* REMOTE VIDEO FULL */
+
+
+#remoteVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;   /* or contain if you prefer */
+}
+
+/* LOCAL VIDEO FLOAT */
+#localVideo {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 180px;
+    height: 130px;
+    border-radius: 12px;
+    border: 2px solid #00c6ff;
+    z-index: 10;
+}
+
+/* CALL CONTROLS */
+.call-actions {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.call-actions button {
+    margin: 5px;
+}
+
+.call-status {
+    margin-left: 80px;   /* adjust: 10px / 20px / 30px */
+}
+#callState {
+    margin-left: auto;   /* 🔥 key line */
+    color: #00ffcc;
+    font-size: 14px;
+    margin-right: 340px;
+}
+.call-actions {
+    position: relative;
+    z-index: 2;
+    margin-top: 10px;
+}
+
+/* SUBTITLE */
+#subtitleBox {
+    display: none;
+    position: absolute;
+    bottom: 20px;              /* 👈 distance from bottom */
+    left: 50%;
+    transform: translateX(-50%);  /* 👈 perfect center */
+
+    min-width: 300px;
+    max-width: 70%;
+
+    padding: 10px 20px;
+
+    background: rgba(0,0,0,0.7);
+    color: cyan;
+
+    border-radius: 12px;
+    text-align: center;
+
+    font-size: 16px;
+
+    box-shadow: 0 0 12px rgba(0,198,255,0.6);
+
+    z-index: 10;   /* 👈 stays above video */
+}
+
+#subtitleWrapper {
+    width: 75%;          /* 👈 SAME AS VIDEO */
+    display: flex;
+    justify-content: center; 
+
+}
+
+/* TEXT */
+p {
+    margin-top: 10px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+    .main-container {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .video-box, .voice-box {
+        height: auto;
+    }
+
+    #remoteVideo {
+        width: 100%;
+        height: auto;
+    }
+}
+
+#callControls {
+    position: relative;
+    bottom: 1px;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 10px;
+
+    display: flex;
+    gap: 12px;
+
+    background: rgba(0, 0, 0, 0.8);
+    padding: 4px 12px;
+
+    border-radius: 5px;   /* rectangle bar */
+    z-index: 100;
+    width: fit-content; 
+}
+
+/* Buttons inside */
+#callControls button {
+    background: #0ea5e9;
+    border: none;
+
+    padding: 10px 18px;
+    border-radius: 6px;   /* 🔥 rectangle shape */
+
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* End button */
+#callControls .end {
+    background: #ef4444;
+}
+
+#callControls button:hover {
+    box-shadow: 0 0 10px #00c6ff;
+}
+
+#incomingUI {
+    position: absolute;   /* ✅ inside video */
+
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    background: rgba(0, 0, 0, 0.7);
+    padding: 20px 30px;
+    border-radius: 15px;
+
+    text-align: center;
+    z-index: 20;
+}
+
+#incomingUI button {
+    margin: 10px;
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+#incomingUI button:first-child {
+    background: #22c55e;  /* green */
+}
+
+#incomingUI button:last-child {
+    background: #ef4444;  /* red */
+}
+
+
+#home {
+    display: none;
+
+    position: fixed;   /* 🔥 break out of flex layout */
+    top: 0;
+    left: 0;
+
+    width: 100vw;      /* full screen */
+    height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+
+    background: 
+        linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.7)),
+        url("main.png") center/cover no-repeat;
+
+    z-index: 1;
+}
+
+#translatorPage {
+    display: flex;
+    width: 100%;
+}
+
+/* HOME CLEAN UI */
+.home-container {
+    max-width: 900px;
+    margin: auto;
+    position: fixed;
+    left: 20%;            
+    padding: 40px;
+    text-align: center;
+}
+
+.home-container h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.tagline {
+    font-size: 18px;
+    color: #aaa;
+    margin-bottom: 30px;
+}
+
+/* GRID FIX */
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+/* CARD STYLE */
+.feature-card {
+    background: #2b3b4c;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: left;
+    transition: 0.3s;
+}
+
+.feature-card span {
+    font-size: 24px;
+}
+
+.feature-card h3 {
+    margin: 10px 0 5px;
+    color: #00c6ff;
+}
+
+.feature-card p {
+    color: #ccc;
+    font-size: 18px;
+}
+
+/* HOVER EFFECT */
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 15px rgba(0,198,255,0.3);
+}
+
+/* BUTTON */
+.start-btn {
+    margin-top: 30px;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 10px;
+}
+
+/* BUTTON */
+.start-btn {
+    margin-top: 30px;
+    padding: 12px 25px;
+    font-size: 16px;
+    border-radius: 10px;
+}
+
+/* ===== SETTINGS LAYOUT (LAPTOP FRIENDLY) ===== */
+#settings {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 160px;
+}
+
+/* MAIN GRID */
+.settings-container {
+    width: 100%;
+    max-width: 1000px;
+
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 50px;
+}
+
+/* LEFT SIDE */
+.profile-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#welcomeUser {
+    margin-bottom: 15px;
+    font-size: 15px;
+    color: #ccc;
+}
+
+/* PROFILE IMAGE */
+.profile-box img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+
+    border: 3px solid #00c6ff;
+    box-shadow: 0 0 20px rgba(0,198,255,0.6);
+    margin-bottom: 15px;
+}
+
+/* FILE INPUT */
+#uploadPic {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+/* RIGHT SIDE */
+.settings-form {
+    width: 100%;
+}
+
+/* TITLE */
+.settings-form h2 {
+    font-size: 26px;
+    margin-bottom: 25px;
+    color: #00c6ff;
+}
+
+/* INPUT GRID */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* FULL WIDTH (NAME) */
+.full-width {
+    grid-column: span 2;
+}
+
+/* INPUT GROUP */
+.input-group label {
+    font-size: 13px;
+    color: #aaa;
+}
+
+.input-group input {
+    width: 100%;
+    margin-top: 6px;
+    padding: 14px;
+
+    border-radius: 10px;
+    border: none;
+
+    background: rgba(255,255,255,0.08);
+    color: white;
+}
+
+/* BUTTONS */
+.button-row {
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+}
+
+.button-row button {
+    padding: 12px 25px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+}
+
+/* SAVE */
+.button-row button:first-child {
+    background: linear-gradient(135deg, #00c6ff, #0072ff);
+}
+
+/* LOGOUT */
+.logout-btn {
+    background: linear-gradient(135deg, #ff4b2b, #ff0000);
+}
