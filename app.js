@@ -24,7 +24,7 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 // ================= DB =================
-sequelize.sync()
+
 .then(() => console.log("Database synced"))
 .catch(err => console.log(err));
 
