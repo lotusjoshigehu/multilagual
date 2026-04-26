@@ -9,6 +9,8 @@ recognition.maxAlternatives = 1;
 let bufferText = "";
 let timeout = null;
 let isCallActive = false;
+let user = JSON.parse(localStorage.getItem("user"));
+
 function start() {
     const inputLang = document.getElementById("inputLang").value;
     recognition.lang = inputLang || "en-US";
@@ -52,7 +54,7 @@ async function processSentence(text) {
     const target = document.getElementById("outputLang").value;
 
     try {
-        const res = await fetch("/translate", {
+        const res = await fetch("https://multilagual.onrender.com/translate", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ text, target })
@@ -78,7 +80,7 @@ async function processSentence(text) {
 
 // ================= VIDEO =================
 
-const socket = io();
+const socket = io("https://multilagual.onrender.com");
 
 let localStream;
 let peer;
@@ -92,7 +94,10 @@ let incomingFrom = null;
 
 // Debug
 socket.on("connect", () => {
-    console.log("Connected:", socket.id);
+    if (user && user.email) {
+        socket.emit("register", user.email);
+        console.log("Registered:", user.email);
+    }
 });
 
 // ================= AUTO REGISTER =================
@@ -103,7 +108,6 @@ window.onload = function () {
     // ===== GET USER FROM LOCAL STORAGE =====
     let user = JSON.parse(localStorage.getItem("user"));
 
-    // ❌ If no user → go back to login
     if (!user || !user.email) {
         window.location.href = "login.html";
         return;
@@ -113,10 +117,6 @@ window.onload = function () {
     document.getElementById("myEmail").value = user.email;
 
     // ===== REGISTER SOCKET USER =====
-    socket.on("connect", () => {
-        socket.emit("register", user.email);
-        console.log("✅ Registered as:", user.email);
-    });
 
     // ===== LOAD PROFILE =====
     document.getElementById("nameInput").value = user.name || "";
@@ -168,9 +168,7 @@ async function startCall() {
 
     // 🔥 HIDE INPUT UI
     // hide only inputs + button
-   document.getElementById("myEmail").style.visibility = "hidden";
-   document.getElementById("targetEmail").style.visibility = "hidden";
-   document.querySelector("#callSetup button").style.visibility = "hidden";
+   document.getElementById("callSetup").style.display = "none";
     // 🔥 SHOW CONTROLS
     document.getElementById("callControls").style.display = "block";
 
@@ -241,7 +239,7 @@ async function acceptCall() {
     // 🔥 HIDE INPUT
 
     // 🔥 SHOW CONTROLS
-    document.getElementById("callControls").style.display = "none";
+    document.getElementById("callControls").style.display = "block";
 
 
     targetSocketId = incomingFrom;
@@ -352,7 +350,7 @@ function endCall() {
     document.getElementById("subtitleBox").style.display = "none";
 
     // 🔥 HIDE CONTROLS
-    document.getElementById("callControls").style.display = "block";
+    document.getElementById("callControls").style.display = "none";
 
     // 🔥 SHOW INPUT AGAIN
     document.getElementById("callSetup").style.display = "block";

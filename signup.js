@@ -6,7 +6,7 @@ document.getElementById("signupForm").addEventListener("submit", async e => {
     const password = document.getElementById("password").value;
 
     try {
-        const res = await fetch("/signup", {
+        const res = await fetch("https://multilagual.onrender.com/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, email, password })
