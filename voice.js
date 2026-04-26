@@ -52,7 +52,7 @@ async function processSentence(text) {
     const target = document.getElementById("outputLang").value;
 
     try {
-        const res = await fetch("http://localhost:3000/translate", {
+        const res = await fetch("/translate", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ text, target })
@@ -78,7 +78,7 @@ async function processSentence(text) {
 
 // ================= VIDEO =================
 
-const socket = io("http://localhost:3000");
+const socket = io();
 
 let localStream;
 let peer;
@@ -97,35 +97,38 @@ socket.on("connect", () => {
 
 // ================= AUTO REGISTER =================
 
+
 window.onload = function () {
 
-    // ===== REGISTER =====
+    // ===== GET USER FROM LOCAL STORAGE =====
     let user = JSON.parse(localStorage.getItem("user"));
-    let email = localStorage.getItem("userEmail");
 
-    if (!email) {
-        email = "user_" + Math.floor(Math.random() * 10000) + "@app.com";
-        localStorage.setItem("userEmail", email);
+    // ❌ If no user → go back to login
+    if (!user || !user.email) {
+        window.location.href = "login.html";
+        return;
     }
 
-    document.getElementById("myEmail").value = email;
-    socket.emit("register", email);
+    // ===== SET EMAIL IN INPUT =====
+    document.getElementById("myEmail").value = user.email;
 
-    console.log("Registered as:", email);
+    // ===== REGISTER SOCKET USER =====
+    socket.on("connect", () => {
+        socket.emit("register", user.email);
+        console.log("✅ Registered as:", user.email);
+    });
 
-    // ===== ✅ PROFILE LOAD (PUT HERE) =====
-    if (user) {
-        document.getElementById("nameInput").value = user.name || "";
-        document.getElementById("emailInput").value = user.email || "";
+    // ===== LOAD PROFILE =====
+    document.getElementById("nameInput").value = user.name || "";
+    document.getElementById("emailInput").value = user.email || "";
 
-        const welcome = document.getElementById("welcomeUser");
-        if (welcome) {
-            welcome.innerText = "Hi, " + (user.name || "User") + " 👋";
-        }
+    const welcome = document.getElementById("welcomeUser");
+    if (welcome) {
+        welcome.innerText = "Hi, " + (user.name || "User") + " 👋";
+    }
 
-        if (user.photo) {
-            document.getElementById("profilePic").src = user.photo;
-        }
+    if (user.photo) {
+        document.getElementById("profilePic").src = user.photo;
     }
 
     // ===== DEFAULT PAGE =====
@@ -152,19 +155,8 @@ initVideo();
 
 // ================= CALL =================
 
-function registerUser() {
-    const email = document.getElementById("myEmail").value;
-
-    if (!email) {
-        alert("Enter your email");
-        return;
-    }
-
-    socket.emit("register", email);
-}
 
 async function startCall() {
-    registerUser();
 
     const targetEmail = document.getElementById("targetEmail").value;
     document.getElementById("callState").innerText = "Calling...";
@@ -249,7 +241,7 @@ async function acceptCall() {
     // 🔥 HIDE INPUT
 
     // 🔥 SHOW CONTROLS
-    document.getElementById("callControls").style.display = "block";
+    document.getElementById("callControls").style.display = "none";
 
 
     targetSocketId = incomingFrom;
@@ -327,26 +319,24 @@ socket.on("call-declined", () => {
 
 // 🎤 Mute
 function toggleMute() {
+    if (!localStream) return;
+
     isMuted = !isMuted;
 
     localStream.getAudioTracks().forEach(track => {
         track.enabled = !isMuted;
     });
-
-    const btn = document.querySelector("#callControls button:nth-child(1)");
-    btn.innerText = isMuted ? "🔇 Unmute" : "🎤 Mute";
 }
 
 // 📷 Camera
 function toggleCamera() {
+    if (!localStream) return;
+
     isCameraOff = !isCameraOff;
 
     localStream.getVideoTracks().forEach(track => {
         track.enabled = !isCameraOff;
     });
-
-    const btn = document.querySelector("#callControls button:nth-child(2)");
-    btn.innerText = isCameraOff ? "📷 Camera On" : "📷 Camera Off";
 }
 // 🔴 End Call
 function endCall() {
@@ -462,20 +452,14 @@ document.getElementById("uploadPic").addEventListener("change", function () {
     if (file) reader.readAsDataURL(file);
 });
 
+
 function saveProfile() {
     let user = JSON.parse(localStorage.getItem("user")) || {};
 
     user.name = document.getElementById("nameInput").value;
+    user.email = document.getElementById("emailInput").value;
 
     localStorage.setItem("user", JSON.stringify(user));
-
-    alert("Profile Updated ✅");
-
-    // update greeting instantly
-    const welcome = document.getElementById("welcomeUser");
-    if (welcome) {
-        welcome.innerText = "Hi, " + user.name + " 👋";
-    }
 }
 
 function logout() {
