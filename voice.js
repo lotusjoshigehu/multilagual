@@ -180,11 +180,13 @@ async function startCall() {
 
     // 🔥 HIDE INPUT UI
     // hide only inputs + button
-   document.getElementById("myEmail").style.visibility = "hidden";
-   document.getElementById("targetEmail").style.visibility = "hidden";
-   document.querySelector("#callSetup button").style.visibility = "hidden";
+   document.getElementById("callSetup").style.display = "none";
     // 🔥 SHOW CONTROLS
-    document.getElementById("callControls").style.display = "block";
+    const controls = document.getElementById("callControls");
+    controls.style.display = "flex";
+    controls.style.justifyContent = "center";
+    controls.style.alignItems = "center";
+    controls.style.gap = "12px";
 
     peer = new RTCPeerConnection({
     iceServers: [
@@ -266,7 +268,11 @@ async function acceptCall() {
     // 🔥 HIDE INPUT
 
     // 🔥 SHOW CONTROLS
-    document.getElementById("callControls").style.display = "block";
+    const controls = document.getElementById("callControls");
+    controls.style.display = "flex";
+    controls.style.justifyContent = "center";
+    controls.style.alignItems = "center";
+    controls.style.gap = "12px";
 
 
     targetSocketId = incomingFrom;
@@ -321,7 +327,10 @@ async function acceptCall() {
 function declineCall() {
     document.getElementById("incomingUI").style.display = "none";
 
-    document.getElementById("callSetup").style.display = "block";
+    const setup = document.getElementById("callSetup");
+    setup.style.display = "flex";
+    setup.style.flexDirection = "column";
+    setup.style.alignItems = "center";
     document.getElementById("callState").innerText = "";
 
     socket.emit("call-declined", {
@@ -397,7 +406,7 @@ function endCall() {
     document.getElementById("callControls").style.display = "none";
 
     // 🔥 SHOW INPUT AGAIN
-    document.getElementById("callSetup").style.display = "block";
+    document.getElementById("callSetup").style.display = "flex";
     document.getElementById("callState").innerText = "";
 }
 
