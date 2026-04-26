@@ -118,6 +118,7 @@ window.onload = function () {
 
     // ===== REGISTER SOCKET USER =====
 
+
     // ===== LOAD PROFILE =====
     document.getElementById("nameInput").value = user.name || "";
     document.getElementById("emailInput").value = user.email || "";
@@ -139,16 +140,22 @@ window.onload = function () {
 // ================= CAMERA =================
 
 async function initVideo() {
-    localStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-        }
-    });
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+        });
 
-    document.getElementById("localVideo").srcObject = localStream;
+        const video = document.getElementById("localVideo");
+        video.srcObject = localStream;
+        video.muted = true;
+        await video.play();
+
+        console.log("Camera working");
+    } catch (err) {
+        console.error(err);
+        alert("Allow camera permission");
+    }
 }
 initVideo();
 
@@ -157,6 +164,11 @@ initVideo();
 
 
 async function startCall() {
+    
+    if (!localStream) {
+    alert("Camera not ready");
+    return;
+}
 
     const targetEmail = document.getElementById("targetEmail").value;
     document.getElementById("callState").innerText = "Calling...";
@@ -168,7 +180,9 @@ async function startCall() {
 
     // 🔥 HIDE INPUT UI
     // hide only inputs + button
-   document.getElementById("callSetup").style.display = "none";
+   document.getElementById("myEmail").style.visibility = "hidden";
+   document.getElementById("targetEmail").style.visibility = "hidden";
+   document.querySelector("#callSetup button").style.visibility = "hidden";
     // 🔥 SHOW CONTROLS
     document.getElementById("callControls").style.display = "block";
 
