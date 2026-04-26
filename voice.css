@@ -6,6 +6,16 @@
     font-family: "Segoe UI", sans-serif;
 }
 
+* {
+    box-sizing: border-box;
+}
+
+
+@media (max-width: 768px) {
+    video {
+        width: 100%;
+    }
+}
 /* FULL SCREEN BODY */
 html, body {
     height: 100%;
