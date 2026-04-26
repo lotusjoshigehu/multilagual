@@ -32,11 +32,8 @@ html, body {
     gap: 15px;
     padding: 15px;
 
-    padding-left: 100px;    /* sidebar space */
-    padding-right: 250px;
-      
-
-    justify-content: center;   /* ✅ IMPORTANT */
+    justify-content: center;
+    align-items: center;
 }
 
 .main-container.full {
@@ -46,15 +43,14 @@ html, body {
 }
 
 .video-section {
-    flex: 3;
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 15px;
 
     width: 100%;
-    margin-left: -20px;   /* ✅ now it will actually work */
     max-width: 900px;
 }
 /* TOGGLE BUTTON */
@@ -151,21 +147,14 @@ html, body {
 }
 /* RIGHT → TRANSLATOR */
 .voice-box {
-    position: fixed;
-
-    top: 20px;
-    right: 20px;
-
-    width: 380px;        /* 🔥 fixed width */
-    height: calc(100vh - 40px);  /* full height with margin */
+    width: 320px;
+    max-width: 100%;
 
     background: #2b3b4c;
     padding: 20px;
     border-radius: 15px;
 
-    overflow-y: auto;    /* scroll if content increases */
-
-    box-shadow: 0 0 15px rgba(0,198,255,0.3);
+    overflow-y: auto;
 }
 
 /* HEADINGS */
@@ -216,14 +205,15 @@ button:hover {
 
 /* LOCAL VIDEO FLOAT */
 #localVideo {
-    position: fixed;
+    position: absolute;
     bottom: 20px;
     right: 20px;
-    width: 180px;
-    height: 130px;
-    border-radius: 12px;
+
+    width: 150px;
+    height: 110px;
+
+    border-radius: 10px;
     border: 2px solid #00c6ff;
-    z-index: 10;
 }
 
 /* CALL CONTROLS */
@@ -307,21 +297,17 @@ p {
 }
 
 #callControls {
-    position: relative;
-    bottom: 1px;
+    position: absolute;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    margin-top: 10px;
 
     display: flex;
     gap: 12px;
 
-    background: rgba(0, 0, 0, 0.8);
-    padding: 4px 12px;
-
-    border-radius: 5px;   /* rectangle bar */
-    z-index: 100;
-    width: fit-content; 
+    background: rgba(0,0,0,0.8);
+    padding: 10px 15px;
+    border-radius: 10px;
 }
 
 /* Buttons inside */
@@ -595,4 +581,28 @@ p {
 /* LOGOUT */
 .logout-btn {
     background: linear-gradient(135deg, #ff4b2b, #ff0000);
+}
+
+@media (max-width: 900px) {
+
+    .main-container {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .voice-box {
+        width: 100%;
+        height: auto;
+    }
+
+    #localVideo {
+        width: 120px;
+        height: 90px;
+        bottom: 10px;
+        right: 10px;
+    }
+
+    #callControls {
+        bottom: 10px;
+    }
 }
