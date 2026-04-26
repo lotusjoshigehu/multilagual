@@ -338,6 +338,10 @@ function toggleMute() {
     localStream.getAudioTracks().forEach(track => {
         track.enabled = !isMuted;
     });
+
+    // 🔥 UPDATE BUTTON TEXT
+    const btn = document.querySelector("#callControls button:nth-child(1)");
+    btn.innerText = isMuted ? "🔇 Unmute" : "🎤 Mute";
 }
 
 // 📷 Camera
@@ -466,12 +470,23 @@ document.getElementById("uploadPic").addEventListener("change", function () {
 
 
 function saveProfile() {
-    let user = JSON.parse(localStorage.getItem("user")) || {};
+    let updatedUser = JSON.parse(localStorage.getItem("user")) || {};
 
-    user.name = document.getElementById("nameInput").value;
-    user.email = document.getElementById("emailInput").value;
+    updatedUser.name = document.getElementById("nameInput").value;
+    updatedUser.email = document.getElementById("emailInput").value;
 
-    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+
+    // 🔥 UPDATE GLOBAL USER
+    user = updatedUser;
+
+    // 🔥 UPDATE UI
+    const welcome = document.getElementById("welcomeUser");
+    if (welcome) {
+        welcome.innerText = "Hi, " + updatedUser.name + " 👋";
+    }
+
+    alert("Profile saved ✅");
 }
 
 function logout() {
