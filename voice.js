@@ -486,7 +486,7 @@ function saveProfile() {
         welcome.innerText = "Hi, " + updatedUser.name + " 👋";
     }
 
-    alert("Profile saved ✅");
+    alert("Profile saved ");
 }
 
 function logout() {
