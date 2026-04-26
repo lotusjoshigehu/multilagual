@@ -20,18 +20,17 @@ document.getElementById("signupForm").addEventListener("submit", async e => {
         }
 
         if (res.ok) {
-             let user = {
-             name: name,
-             email: email
-             };
 
-            localStorage.setItem("user", JSON.stringify(user));
+            // 🔥 DO NOT SAVE USER HERE
+            localStorage.removeItem("user");
 
             alert("Signup successful");
             window.location.href = "login.html";
+
         } else {
             alert("Signup failed");
         }
+
     } catch (err) {
         alert("Server not responding");
         console.error(err);

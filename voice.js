@@ -106,7 +106,7 @@ socket.on("connect", () => {
 window.onload = function () {
 
     // ===== GET USER FROM LOCAL STORAGE =====
-    let user = JSON.parse(localStorage.getItem("user"));
+    
 
     if (!user || !user.email) {
         window.location.href = "login.html";

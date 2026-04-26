@@ -1,7 +1,7 @@
 document.getElementById("loginForm").addEventListener("submit", async e => {
     e.preventDefault();
 
-    const email = document.getElementById("email").value;
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
     try {
@@ -14,21 +14,25 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
         const data = await res.json();
 
         if (res.ok) {
-          
-             let user = {
-        name: data.name || email.split("@")[0],   // 🔥 fallback name
-        email: email
-    };
 
-           localStorage.setItem("user", JSON.stringify(user));
-            // ✅ FIXED HERE
-            localStorage.setItem("loggedIn", "true");
-            localStorage.setItem("userEmail", email);
+            // 🔥 1. CLEAR EVERYTHING (VERY IMPORTANT)
+            localStorage.clear();
 
+            // 🔥 2. SAVE ONLY ONE USER OBJECT
+            const user = {
+                name: data.name || email.split("@")[0],
+                email: email
+            };
+
+            localStorage.setItem("user", JSON.stringify(user));
+
+            // 🔥 3. REDIRECT
             window.location.href = "voice.html";
+
         } else {
             alert(data.message || "Login failed");
         }
+
     } catch (err) {
         alert("Server not responding");
         console.error(err);
