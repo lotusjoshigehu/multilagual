@@ -10,6 +10,7 @@ let bufferText = "";
 let timeout = null;
 let isCallActive = false;
 let user = JSON.parse(localStorage.getItem("user"));
+let currentRoom = null;
 
 function start() {
     const inputLang = document.getElementById("inputLang").value;
@@ -64,13 +65,19 @@ async function processSentence(text) {
 
         document.getElementById("output").innerText = data.translated;
 
-        if (targetSocketId) {
-            socket.emit("send-translation", {
-                to: targetSocketId,
-                text: data.translated,
-                lang: target
-            });
-        }
+       if (currentRoom) {
+    socket.emit("send-translation-room", {
+        roomId: currentRoom,
+        text: data.translated,
+        lang: target
+    });
+} else if (targetSocketId) {
+    socket.emit("send-translation", {
+        to: targetSocketId,
+        text: data.translated,
+        lang: target
+    });
+}
 
     } catch (err) {
         console.error(err);
@@ -172,6 +179,7 @@ async function startCall() {
 
     const targetEmail = document.getElementById("targetEmail").value;
     document.getElementById("callState").innerText = "Calling...";
+    document.getElementById("callTitle").style.display = "none";
 
     if (!targetEmail) {
         alert("Enter target email");
@@ -254,6 +262,9 @@ socket.on("incoming-call", ({ from, offer }) => {
     document.getElementById("incomingUI").style.display = "block";
 });
 
+
+
+
 // ================= ACCEPT =================
 
 async function acceptCall() {
@@ -263,6 +274,8 @@ async function acceptCall() {
 
     document.getElementById("subtitleBox").style.display = "block";
     document.getElementById("callState").innerText = "Connected";
+    document.getElementById("callSetup").style.display = "none";
+    document.getElementById("callTitle").style.display = "none";
     
 
     // 🔥 HIDE INPUT
@@ -401,6 +414,7 @@ function endCall() {
     document.getElementById("remoteVideo").srcObject = null;
 
     document.getElementById("subtitleBox").style.display = "none";
+    document.getElementById("callTitle").style.display = "block";
 
     // 🔥 HIDE CONTROLS
     document.getElementById("callControls").style.display = "none";
@@ -434,8 +448,7 @@ let hideTimer;
 // Show controls when mouse moves
 document.addEventListener("mousemove", () => {
     const bar = document.getElementById("controlBar");
-
-    bar.classList.remove("hidden");
+    if (!bar) return;
 
     clearTimeout(hideTimer);
 
@@ -527,5 +540,18 @@ function saveProfile() {
 function logout() {
     localStorage.removeItem("user");
     window.location.href = "login.html";
+}
+
+function joinRoom(roomId) {
+    if (!roomId) return;
+
+    currentRoom = roomId;
+
+    socket.emit("join-room", {
+        roomId: roomId,
+        user: user.email
+    });
+
+    console.log("Joined room:", roomId);
 }
 

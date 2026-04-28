@@ -230,10 +230,11 @@ button:hover {
     margin-left: 80px;   /* adjust: 10px / 20px / 30px */
 }
 #callState {
-    margin-left: auto;   /* 🔥 key line */
+    display: block;
+    text-align: center;
     color: #00ffcc;
-    font-size: 14px;
-    margin-right: 340px;
+    margin: 10px 0;
+    font-weight: bold;
 }
 .call-actions {
     position: relative;
@@ -297,23 +298,21 @@ p {
 }
 
 #callControls {
-    position: relative;
-    bottom: 1px;
+    position: fixed;          /* 🔥 key change */
+    bottom: 0;                /* stick to screen bottom */
     left: 50%;
     transform: translateX(-50%);
-    margin-top: 10px;
 
-    display: flex;
+    width: auto;
+    display: none;
     gap: 12px;
 
-    background: rgba(0, 0, 0, 0.8);
-    padding: 4px 12px;
+    background: rgba(0,0,0,0.7);
+    padding: 12px 20px;
+    border-radius: 12px 12px 0 0;  /* top rounded only */
 
-    border-radius: 5px;   /* rectangle bar */
-    z-index: 100;
-    width: fit-content; 
+    z-index: 9999;            /* 🔥 always on top */
 }
-
 /* Buttons inside */
 #callControls button {
     background: #0ea5e9;

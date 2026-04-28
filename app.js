@@ -11,7 +11,7 @@ const User = require("./models/users");
 const app = express();
 const server = http.createServer(app);
 
-// ✅ SOCKET CONFIG (CORS FIXED)
+// ✅ SOCKET CONFIG
 const io = new Server(server, {
     cors: {
         origin: "*",
@@ -24,8 +24,6 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 // ================= DB =================
-
-// ================= DB =================
 (async () => {
     try {
         await sequelize.authenticate();
@@ -34,7 +32,6 @@ app.use(express.static(__dirname));
         console.log("❌ DB Error:", err.message);
     }
 })();
-
 
 // ================= AUTH =================
 app.post("/signup", async (req, res) => {
@@ -55,7 +52,7 @@ app.post("/signup", async (req, res) => {
 
         res.status(201).json({
             message: "Signup success",
-            name: user.name   // 🔥 IMPORTANT (frontend needs this)
+            name: user.name
         });
 
     } catch (err) {
@@ -63,7 +60,6 @@ app.post("/signup", async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
-
 
 app.post("/login", async (req, res) => {
     try {
@@ -79,7 +75,7 @@ app.post("/login", async (req, res) => {
 
         res.json({
             message: "Login success",
-            name: user.name   // 🔥 FIX
+            name: user.name
         });
 
     } catch (err) {
@@ -88,13 +84,11 @@ app.post("/login", async (req, res) => {
     }
 });
 
-
 // ================= TRANSLATE =================
 app.post("/translate", async (req, res) => {
     const { text, target } = req.body;
 
     try {
-        // 🔥 auto-detect handled by library internally
         const translated = await translate(text, { to: target });
         res.json({ translated });
     } catch (err) {
@@ -102,7 +96,6 @@ app.post("/translate", async (req, res) => {
         res.status(500).json({ error: "Translation failed" });
     }
 });
-
 
 // ================= SOCKET =================
 let users = {}; // email -> socketId
@@ -127,13 +120,11 @@ io.on("connection", (socket) => {
         console.log("📞 Calling:", to, "Socket:", targetSocket);
 
         if (targetSocket) {
-            // send call to receiver
             io.to(targetSocket).emit("incoming-call", {
                 from: socket.id,
                 offer
             });
 
-            // 🔥 send socketId back to caller (IMPORTANT)
             socket.emit("user-found", { socketId: targetSocket });
 
         } else {
@@ -152,12 +143,31 @@ io.on("connection", (socket) => {
         io.to(to).emit("ice-candidate", { candidate });
     });
 
-    // ================= 🔥 TRANSLATION =================
+    // ================= 1-to-1 TRANSLATION =================
     socket.on("send-translation", ({ to, text, lang }) => {
-
         console.log("🌍 Sending translation to:", to);
 
         io.to(to).emit("receive-translation", {
+            text,
+            lang
+        });
+    });
+
+    // ================= ROOM JOIN =================
+    socket.on("join-room", ({ roomId, user }) => {
+        socket.join(roomId);
+
+        console.log(user + " joined room:", roomId);
+
+        socket.to(roomId).emit("user-joined", {
+            user,
+            socketId: socket.id
+        });
+    });
+
+    // ================= ROOM TRANSLATION =================
+    socket.on("send-translation-room", ({ roomId, text, lang }) => {
+        socket.to(roomId).emit("receive-translation", {
             text,
             lang
         });
@@ -176,7 +186,6 @@ io.on("connection", (socket) => {
         }
     });
 });
-
 
 // ================= START =================
 server.listen(3000, () => {

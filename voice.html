@@ -102,12 +102,13 @@
 
 
     <div id="callSetup" class="call-controls">
-        <input id="myEmail" placeholder="Your Email">
-        <input id="targetEmail" placeholder="Enter User Email">
-        <button onclick="startCall()">Call</button>
-        <span class="call-status">Video Call</span>
-         <span id="callState"></span>
-    </div>
+    <input id="myEmail" placeholder="Your Email">
+    <input id="targetEmail" placeholder="Enter User Email">
+    <button onclick="startCall()">Call</button>
+    <span id="callTitle" class="call-status">Video Call</span>
+</div>
+
+<span id="callState" style="display:block; text-align:center; margin-top:10px;"></span>
 
         <div id="videoContainer">
             <video id="remoteVideo" autoplay></video>
