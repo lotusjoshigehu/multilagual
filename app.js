@@ -142,15 +142,30 @@ io.on("connection", (socket) => {
     });
 
     // ================= ROOM JOIN =================
-    socket.on("join-room", ({ roomId, user }) => {
-        socket.join(roomId);
+    socket.on("join-room", ({ roomId, password, user }) => {
 
-        console.log(`${user} joined room: ${roomId}`);
+    if (!rooms.hasOwnProperty(roomId)) {
+        socket.emit("join-error", "Room does not exist");
+        return;
+    }
 
-        socket.to(roomId).emit("user-joined", {
-            socketId: socket.id
-        });
+    const roomPass = rooms[roomId];
+
+    if (roomPass && roomPass !== password) {
+        socket.emit("join-error", "Wrong password");
+        return;
+    }
+
+    socket.join(roomId);
+
+    console.log(user + " joined room:", roomId);
+
+    socket.to(roomId).emit("user-joined", {
+        socketId: socket.id
     });
+
+    socket.emit("join-success", roomId);
+});
 
     // ================= ROOM TRANSLATION =================
     socket.on("send-translation-room", ({ roomId, text, lang }) => {
