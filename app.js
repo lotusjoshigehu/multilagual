@@ -27,9 +27,9 @@ app.use(express.static(__dirname));
 (async () => {
     try {
         await sequelize.authenticate();
-        console.log("✅ Database connected");
+        console.log("Database connected");
     } catch (err) {
-        console.log("❌ DB Error:", err.message);
+        console.log("DB Error:", err.message);
     }
 })();
 
@@ -109,7 +109,7 @@ io.on("connection", (socket) => {
         if (!email) return;
 
         users[email] = socket.id;
-        console.log("✅ Registered:", email, "=>", socket.id);
+        console.log("Registered:", email, "=>", socket.id);
     });
 
     // ================= CALL =================
@@ -117,7 +117,7 @@ io.on("connection", (socket) => {
 
         const targetSocket = users[to];
 
-        console.log("📞 Calling:", to, "Socket:", targetSocket);
+        console.log("Calling:", to, "Socket:", targetSocket);
 
         if (targetSocket) {
             io.to(targetSocket).emit("incoming-call", {
@@ -128,13 +128,13 @@ io.on("connection", (socket) => {
             socket.emit("user-found", { socketId: targetSocket });
 
         } else {
-            console.log("❌ User not online:", to);
+            console.log("User not online:", to);
         }
     });
 
     // ================= ANSWER =================
     socket.on("answer-call", ({ to, answer }) => {
-        console.log("✅ Call answered");
+        console.log("Call answered");
         io.to(to).emit("call-answered", { answer });
     });
 
@@ -145,7 +145,7 @@ io.on("connection", (socket) => {
 
     // ================= 1-to-1 TRANSLATION =================
     socket.on("send-translation", ({ to, text, lang }) => {
-        console.log("🌍 Sending translation to:", to);
+        console.log("Sending translation to:", to);
 
         io.to(to).emit("receive-translation", {
             text,
@@ -176,18 +176,50 @@ io.on("connection", (socket) => {
     // ================= DISCONNECT =================
     socket.on("disconnect", () => {
 
-        console.log("🔴 Disconnected:", socket.id);
+        console.log("Disconnected:", socket.id);
 
         for (let email in users) {
             if (users[email] === socket.id) {
                 delete users[email];
-                console.log("❌ Removed user:", email);
+                console.log("Removed user:", email);
             }
         }
     });
 });
 
+// ================= ROOM WEBRTC =================
+
+socket.on("room-offer", ({ to, offer }) => {
+    io.to(to).emit("room-offer", {
+        from: socket.id,
+        offer
+    });
+});
+
+socket.on("room-answer", ({ to, answer }) => {
+    io.to(to).emit("room-answer", {
+        from: socket.id,
+        answer
+    });
+});
+
+socket.on("room-ice", ({ to, candidate }) => {
+    io.to(to).emit("room-ice", {
+        from: socket.id,
+        candidate
+    });
+});
+
+socket.on("disconnect", () => {
+
+    for (let room of socket.rooms) {
+        socket.to(room).emit("user-left", {
+            socketId: socket.id
+        });
+    }
+});
+
 // ================= START =================
 server.listen(3000, () => {
-    console.log("🚀 Server running on port 3000");
+    console.log("Server running on port 3000");
 });

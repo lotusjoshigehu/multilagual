@@ -90,7 +90,8 @@ async function processSentence(text) {
 const socket = io("https://multilagual.onrender.com");
 
 let localStream;
-let peer;
+let peers={}
+let peer=null
 let targetSocketId = "";
 
 // 🔥 NEW STATES
@@ -241,6 +242,23 @@ async function startCall() {
     console.log("Calling:", targetEmail);
 }
 
+function addRemoteVideo(stream, id) {
+
+    let video = document.getElementById(id);
+
+    if (!video) {
+        video = document.createElement("video");
+        video.id = id;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.style.width = "200px";
+
+        document.getElementById("videoContainer").appendChild(video);
+    }
+
+    video.srcObject = stream;
+}
+
 
 // ================= SOCKET EVENTS =================
 
@@ -248,6 +266,37 @@ async function startCall() {
 socket.on("user-found", ({ socketId }) => {
     targetSocketId = socketId;
     console.log("Target socket:", socketId);
+});
+
+socket.on("room-offer", async ({ from, offer }) => {
+
+   const newPeer = createPeer(from);
+   peers[from] = newPeer;
+
+   localStream.getTracks().forEach(track => {
+       newPeer.addTrack(track, localStream);
+   });
+
+   await newPeer.setRemoteDescription(new RTCSessionDescription(offer));
+
+   const answer = await newPeer.createAnswer();
+   await newPeer.setLocalDescription(answer);
+
+   socket.emit("room-answer", {
+      to: from,
+      answer
+    });
+});
+
+socket.on("room-answer", async ({ from, answer }) => {
+    if (!peers[from]) return;
+await peers[from].setRemoteDescription(new RTCSessionDescription(answer));
+});
+
+socket.on("room-ice", async ({ from, candidate }) => {
+    if (peers[from]) {
+        await peers[from].addIceCandidate(new RTCIceCandidate(candidate));
+    }
 });
 
 // ================= INCOMING CALL (UPDATED) =================
@@ -260,6 +309,27 @@ socket.on("incoming-call", ({ from, offer }) => {
     incomingFrom = from;
 
     document.getElementById("incomingUI").style.display = "block";
+});
+
+socket.on("user-joined", async ({ socketId }) => {
+
+    console.log("New user joined:", socketId);
+
+    const newPeer = createPeer(socketId);
+
+    peers[socketId] = newPeer;
+
+    localStream.getTracks().forEach(track => {
+        newPeer.addTrack(track, localStream);
+    });
+
+    const offer = await newPeer.createOffer();
+    await newPeer.setLocalDescription(offer);
+
+    socket.emit("room-offer", {
+        to: socketId,
+        offer
+    });
 });
 
 
@@ -351,6 +421,30 @@ function declineCall() {
     });
 }
 
+
+function createPeer(socketId) {
+
+    const peer = new RTCPeerConnection({
+        iceServers: [
+            { urls: "stun:stun.l.google.com:19302" }
+        ]
+    });
+
+    peer.ontrack = (event) => {
+        addRemoteVideo(event.streams[0], socketId);
+    };
+
+    peer.onicecandidate = (event) => {
+        if (event.candidate) {
+            socket.emit("room-ice", {
+                to: socketId,
+                candidate: event.candidate
+            });
+        }
+    };
+
+    return peer;
+}
 // ================= CALL ANSWERED =================
 
 socket.on("call-answered", async ({ answer }) => {
@@ -373,6 +467,19 @@ socket.on("ice-candidate", async ({ candidate }) => {
 
 socket.on("call-declined", () => {
     alert("User declined the call");
+});
+
+socket.on("user-left", ({ socketId }) => {
+
+    console.log("User left:", socketId);
+
+    if (peers[socketId]) {
+        peers[socketId].close();
+        delete peers[socketId];
+    }
+
+    const video = document.getElementById(socketId);
+    if (video) video.remove();
 });
 
 // ================= CONTROLS =================
@@ -543,6 +650,8 @@ function logout() {
 }
 
 function joinRoom(roomId) {
+    isCallActive = true;
+    document.getElementById("subtitleBox").style.display = "block";
     if (!roomId) return;
 
     currentRoom = roomId;
