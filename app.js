@@ -11,7 +11,7 @@ const User = require("./models/users");
 const app = express();
 const server = http.createServer(app);
 
-// ✅ SOCKET CONFIG
+// ================= SOCKET =================
 const io = new Server(server, {
     cors: {
         origin: "*",
@@ -27,9 +27,9 @@ app.use(express.static(__dirname));
 (async () => {
     try {
         await sequelize.authenticate();
-        console.log("Database connected");
+        console.log("✅ Database connected");
     } catch (err) {
-        console.log("DB Error:", err.message);
+        console.log("❌ DB Error:", err.message);
     }
 })();
 
@@ -97,7 +97,7 @@ app.post("/translate", async (req, res) => {
     }
 });
 
-// ================= SOCKET =================
+// ================= SOCKET LOGIC =================
 let users = {}; // email -> socketId
 
 io.on("connection", (socket) => {
@@ -109,15 +109,13 @@ io.on("connection", (socket) => {
         if (!email) return;
 
         users[email] = socket.id;
-        console.log("Registered:", email, "=>", socket.id);
+        console.log("✅ Registered:", email, "=>", socket.id);
     });
 
-    // ================= CALL =================
+    // ================= CALL (1-to-1) =================
     socket.on("call-user", ({ to, offer }) => {
 
         const targetSocket = users[to];
-
-        console.log("Calling:", to, "Socket:", targetSocket);
 
         if (targetSocket) {
             io.to(targetSocket).emit("incoming-call", {
@@ -126,97 +124,81 @@ io.on("connection", (socket) => {
             });
 
             socket.emit("user-found", { socketId: targetSocket });
-
-        } else {
-            console.log("User not online:", to);
         }
     });
 
-    // ================= ANSWER =================
     socket.on("answer-call", ({ to, answer }) => {
-        console.log("Call answered");
         io.to(to).emit("call-answered", { answer });
     });
 
-    // ================= ICE =================
     socket.on("ice-candidate", ({ to, candidate }) => {
         io.to(to).emit("ice-candidate", { candidate });
     });
 
     // ================= 1-to-1 TRANSLATION =================
     socket.on("send-translation", ({ to, text, lang }) => {
-        console.log("Sending translation to:", to);
-
-        io.to(to).emit("receive-translation", {
-            text,
-            lang
-        });
+        io.to(to).emit("receive-translation", { text, lang });
     });
 
     // ================= ROOM JOIN =================
     socket.on("join-room", ({ roomId, user }) => {
         socket.join(roomId);
 
-        console.log(user + " joined room:", roomId);
+        console.log(`${user} joined room: ${roomId}`);
 
         socket.to(roomId).emit("user-joined", {
-            user,
             socketId: socket.id
         });
     });
 
     // ================= ROOM TRANSLATION =================
     socket.on("send-translation-room", ({ roomId, text, lang }) => {
-        socket.to(roomId).emit("receive-translation", {
-            text,
-            lang
+        socket.to(roomId).emit("receive-translation", { text, lang });
+    });
+
+    // ================= ROOM WEBRTC =================
+    socket.on("room-offer", ({ to, offer }) => {
+        io.to(to).emit("room-offer", {
+            from: socket.id,
+            offer
+        });
+    });
+
+    socket.on("room-answer", ({ to, answer }) => {
+        io.to(to).emit("room-answer", {
+            from: socket.id,
+            answer
+        });
+    });
+
+    socket.on("room-ice", ({ to, candidate }) => {
+        io.to(to).emit("room-ice", {
+            from: socket.id,
+            candidate
         });
     });
 
     // ================= DISCONNECT =================
     socket.on("disconnect", () => {
 
-        console.log("Disconnected:", socket.id);
+        console.log("🔴 Disconnected:", socket.id);
 
+        // remove user
         for (let email in users) {
             if (users[email] === socket.id) {
                 delete users[email];
-                console.log("Removed user:", email);
             }
         }
-    });
-});
 
-// ================= ROOM WEBRTC =================
-
-socket.on("room-offer", ({ to, offer }) => {
-    io.to(to).emit("room-offer", {
-        from: socket.id,
-        offer
-    });
-});
-
-socket.on("room-answer", ({ to, answer }) => {
-    io.to(to).emit("room-answer", {
-        from: socket.id,
-        answer
-    });
-});
-
-socket.on("room-ice", ({ to, candidate }) => {
-    io.to(to).emit("room-ice", {
-        from: socket.id,
-        candidate
-    });
-});
-
-socket.on("disconnect", () => {
-
-    for (let room of socket.rooms) {
-        socket.to(room).emit("user-left", {
-            socketId: socket.id
+        // notify room users
+        socket.rooms.forEach(room => {
+            if (room !== socket.id) {
+                socket.to(room).emit("user-left", {
+                    socketId: socket.id
+                });
+            }
         });
-    }
+    });
 });
 
 // ================= START =================
