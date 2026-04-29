@@ -14,6 +14,7 @@
     <h3>. </h3>
 
     <button onclick="showPage('home')">Home</button>
+    <button onclick="showPage('meeting')">Meeting</button>
     <button onclick="showPage('translator')">Translator</button>
     <button onclick="showPage('settings')">Settings</button>
     </div>
@@ -48,6 +49,23 @@
             </div>
 
         </div>
+
+        <div id="meeting" style="display:none; flex-direction:column; align-items:center; gap:15px;">
+
+    <h2>Create / Join Meeting</h2>
+
+    <!-- CREATE -->
+    <button onclick="createMeeting()">Create Meeting</button>
+
+    <!-- JOIN -->
+    <input id="roomInput" placeholder="Enter Room ID" />
+    <input id="roomPassword" placeholder="Password (optional)" />
+
+    <button onclick="joinMeeting()">Join Meeting</button>
+
+    <p id="meetingInfo"></p>
+
+</div>
 
         <button class="start-btn" onclick="showPage('translator')">
             Start Translating

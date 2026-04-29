@@ -577,6 +577,7 @@ toggleBtn.onclick = () => {
 
 
 function showPage(page) {
+    const meeting = document.getElementById("meeting");
 
     const home = document.getElementById("home");
     const left = document.getElementById("translatorLeft");
@@ -589,11 +590,16 @@ function showPage(page) {
     left.style.display = "none";
     right.style.display = "none";
     settings.style.display = "none";
+    meeting.style.display = "none";
 
     if (page === "home") {
         home.style.display = "flex";
         if (local) local.style.display = "none";
     }
+
+    if (page === "meeting") {
+    meeting.style.display = "flex";
+}
 
     if (page === "translator") {
         left.style.display = "block";
@@ -662,5 +668,16 @@ function joinRoom(roomId) {
     });
 
     console.log("Joined room:", roomId);
+}
+
+function createMeeting() {
+
+    const roomId = "room-" + Math.random().toString(36).substring(2, 8);
+
+    document.getElementById("meetingInfo").innerText =
+        "Room ID: " + roomId;
+
+    // auto join
+    joinRoom(roomId);
 }
 
