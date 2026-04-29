@@ -670,14 +670,54 @@ function joinRoom(roomId) {
     console.log("Joined room:", roomId);
 }
 
+
 function createMeeting() {
 
     const roomId = "room-" + Math.random().toString(36).substring(2, 8);
+    const password = document.getElementById("roomPassword").value;
+
+    socket.emit("create-room", {
+        roomId,
+        password
+    });
 
     document.getElementById("meetingInfo").innerText =
-        "Room ID: " + roomId;
+        "Room ID: " + roomId + " | Password: " + (password || "none");
 
-    // auto join
-    joinRoom(roomId);
+    joinRoomWithPassword(roomId, password);
 }
 
+
+function joinMeeting() {
+
+    const roomId = document.getElementById("roomInput").value;
+    const password = document.getElementById("roomPassword").value;
+
+    if (!roomId) {
+        alert("Enter Room ID");
+        return;
+    }
+
+    joinRoomWithPassword(roomId, password);
+}
+
+function joinRoomWithPassword(roomId, password) {
+
+    socket.emit("join-room", {
+        roomId,
+        password,
+        user: user.email
+    });
+
+    socket.on("join-success", () => {
+        currentRoom = roomId;
+        isCallActive = true;
+
+        document.getElementById("meetingInfo").innerText =
+            "Joined: " + roomId;
+    });
+
+    socket.on("join-error", (msg) => {
+        alert(msg);
+    });
+}

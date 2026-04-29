@@ -4,6 +4,7 @@ const { Server } = require("socket.io");
 const translate = require("translate-google");
 const sequelize = require("./connection/dbconnection");
 const cors = require("cors");
+let rooms = {};   // store roomId → password
 
 require("./models/users");
 const User = require("./models/users");
@@ -177,6 +178,36 @@ io.on("connection", (socket) => {
             candidate
         });
     });
+
+    socket.on("create-room", ({ roomId, password }) => {
+    rooms[roomId] = password || null;
+    console.log("Room created:", roomId, "Pass:", password);
+});
+
+socket.on("join-room", ({ roomId, password, user }) => {
+
+    if (!rooms.hasOwnProperty(roomId)) {
+        socket.emit("join-error", "Room does not exist");
+        return;
+    }
+
+    const roomPass = rooms[roomId];
+
+    if (roomPass && roomPass !== password) {
+        socket.emit("join-error", "Wrong password");
+        return;
+    }
+
+    socket.join(roomId);
+
+    console.log(user + " joined room:", roomId);
+
+    socket.to(roomId).emit("user-joined", {
+        socketId: socket.id
+    });
+
+    socket.emit("join-success", roomId);
+});
 
     // ================= DISCONNECT =================
     socket.on("disconnect", () => {
