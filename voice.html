@@ -4,214 +4,200 @@
     <title>Voice Translator</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="voice.css">
-    <button id="menuToggle">☰</button>
 </head>
 <body>
 
-<div class="main-container">
+<!-- TOGGLE always on top -->
+<button id="menuToggle">☰</button>
 
-    <div class="sidebar" id="sidebar">
-    <h3>. </h3>
+<!-- ════════════════════════════════
+     OVERLAY PAGES (full-screen)
+════════════════════════════════ -->
 
-    <button onclick="showPage('home')">Home</button>
-    <button onclick="showPage('meeting')">Meeting</button>
-    <button onclick="showPage('translator')">Translator</button>
-    <button onclick="showPage('settings')">Settings</button>
-    </div>
-    <div id="home">
+<div id="home" class="overlay-page">
     <div class="home-container">
-
         <h1>JOJO Voice Translator</h1>
-        <p class="tagline">
-            Real-time voice translation with live subtitles and video calling
-        </p>
-
+        <p class="tagline">Real-time voice translation with live subtitles and video calling</p>
         <div class="features">
+            <div class="feature-card"><h3>🌐 Real-Time Translation</h3><p>Speak and instantly translate into another language.</p></div>
+            <div class="feature-card"><h3>💬 Live Subtitles</h3><p>See translated subtitles during your conversations.</p></div>
+            <div class="feature-card"><h3>📹 Video Calling</h3><p>Talk face-to-face with live translation enabled.</p></div>
+            <div class="feature-card"><h3>🌍 Multi-Language</h3><p>Supports English, Hindi, Spanish, French and more.</p></div>
+        </div>
+        <button class="start-btn" onclick="showPage('translator')">Start Translating →</button>
+    </div>
+</div>
 
-            <div class="feature-card">
-                <h3>Real-Time Translation</h3>
-                <p>Speak and instantly translate into another language.</p>
+<div id="meeting" class="overlay-page" style="display:none;">
+    <div class="meeting-wrapper">
+
+        <!-- ── CREATE CARD ── -->
+        <div class="meeting-card">
+            <h2>➕ Create Meeting</h2>
+            <p class="card-sub">Start a new room and share the details</p>
+
+            <div class="input-group">
+                <label>Meeting Name</label>
+                <input id="meetingName" placeholder="e.g. Team Standup" />
+            </div>
+            <div class="input-group">
+                <label>Password (optional)</label>
+                <input id="createPassword" type="password" placeholder="Set a password" />
             </div>
 
-            <div class="feature-card">
-                <h3>Live Subtitles</h3>
-                <p>See translated subtitles during conversations.</p>
-            </div>
+            <button onclick="createMeeting()">➕ Create Meeting</button>
 
-            <div class="feature-card">
-                <h3>Video Calling</h3>
-                <p>Talk face-to-face with live translation.</p>
+            <!-- Result box — hidden until room is created -->
+            <div id="createResult" style="display:none;">
+                <p class="result-label">Share these details:</p>
+                <div class="result-row">
+                    <span class="result-tag">Room ID</span>
+                    <span id="resultRoomId" class="result-val"></span>
+                    <button class="copy-btn" onclick="copyText('resultRoomId', this)">📋 Copy</button>
+                </div>
+                <div class="result-row">
+                    <span class="result-tag">Password</span>
+                    <span id="resultPassword" class="result-val"></span>
+                    <button class="copy-btn" onclick="copyText('resultPassword', this)">📋 Copy</button>
+                </div>
             </div>
-
-            <div class="feature-card">
-                <h3>Multi-Language</h3>
-                <p>Supports English, Hindi, Spanish, and more.</p>
-            </div>
-
         </div>
 
-        
+        <div class="meeting-divider">OR</div>
 
-        <button class="start-btn" onclick="showPage('translator')">
-            Start Translating
-        </button>
+        <!-- ── JOIN CARD ── -->
+        <div class="meeting-card">
+            <h2>🔗 Join Meeting</h2>
+            <p class="card-sub">Enter room details to join</p>
+
+            <div class="input-group">
+                <label>Room ID</label>
+                <input id="roomInput" placeholder="Paste Room ID here" />
+            </div>
+            <div class="input-group">
+                <label>Password (optional)</label>
+                <input id="roomPassword" type="password" placeholder="Enter password" />
+            </div>
+
+            <button onclick="joinMeeting()">🔗 Join Meeting</button>
+            <p id="meetingInfo" class="meeting-info"></p>
+        </div>
 
     </div>
-    
 </div>
 
-<div id="meeting" style="display:none; flex-direction:column; align-items:center; gap:15px;">
-
-    <h2>Create / Join Meeting</h2>
-
-    <!-- CREATE -->
-    <button onclick="createMeeting()">Create Meeting</button>
-
-    <!-- JOIN -->
-    <input id="roomInput" placeholder="Enter Room ID" />
-    <input id="roomPassword" placeholder="Password (optional)" />
-
-    <button onclick="joinMeeting()">Join Meeting</button>
-
-    <p id="meetingInfo"></p>
-
-</div>
-
-<div id="settings" style="display:none;">
+<div id="settings" class="overlay-page" style="display:none;">
     <div class="settings-container">
         <p id="welcomeUser"></p>
-        <h2>Profile Settings</h2>
-
-        <!-- Profile Image -->
+        <h2>⚙️ Profile Settings</h2>
         <div class="profile-box">
-            <img id="profilePic" src="default.png">
+            <img id="profilePic" src="default.png" alt="Profile">
             <input type="file" id="uploadPic">
         </div>
-
-        <!-- Name -->
-        <div class="input-group">
-            <label>Name</label>
-             <input id="nameInput" placeholder="Enter your name">
+        <div class="input-group"><label>Name</label><input id="nameInput" placeholder="Enter your name"></div>
+        <div class="input-group"><label>Email</label><input id="emailInput" disabled></div>
+        <div class="input-group"><label>Date of Birth</label><input type="date" id="dob"></div>
+        <div style="display:flex;gap:12px;margin-top:16px;">
+            <button onclick="saveProfile()">💾 Save</button>
+            <button onclick="logout()" class="logout-btn">🚪 Logout</button>
         </div>
-
-        <!-- Email -->
-        <div class="input-group">
-            <label>Email</label>
-            <input id="emailInput" disabled>
-
-        </div>
-
-        <!-- DOB -->
-        <div class="input-group">
-            <label>Date of Birth</label>
-            <input type="date" id="dob">
-        </div>
-
-     <div style="display:flex; justify-content:center; gap:10px;">
-     <button onclick="saveProfile()">💾 Save</button>
-     <button onclick="logout()" class="logout-btn">🚪 Logout</button>
-</div>
-
     </div>
 </div>
 
-  <div class="video-section"  id="translatorLeft" >
+<!-- ════════════════════════════════
+     MAIN APP (sidebar + video + panel)
+════════════════════════════════ -->
+<div class="main-container" id="mainApp">
 
-    <!-- LEFT SIDE → VIDEO CALL -->
-    <div class="video-box">
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-logo">JOJO</div>
+        <button onclick="showPage('home')">🏠 Home</button>
+        <button onclick="showPage('meeting')">📹 Meeting</button>
+        <button onclick="showPage('translator')">🎤 Translator</button>
+        <button onclick="showPage('settings')">⚙️ Settings</button>
+    </div>
 
-
-    <div id="callSetup" class="call-controls">
-    <input id="myEmail" placeholder="Your Email">
-    <input id="targetEmail" placeholder="Enter User Email">
-    <button onclick="startCall()">Call</button>
-    <span id="callTitle" class="call-status">Video Call</span>
-</div>
-
-<span id="callState" style="display:block; text-align:center; margin-top:10px;"></span>
-
-        <div id="videoContainer">
-            <video id="remoteVideo" autoplay></video>
-            <div id="incomingUI" style="display:none;">
-                <p>📞 Incoming Call...</p>
-                <button onclick="acceptCall()">✅ Accept</button>
-                <button onclick="declineCall()">❌ Decline</button>
+    <div class="video-section" id="translatorLeft">
+        <div class="video-box">
+            <div id="callSetup">
+                <span id="callTitle" class="call-status">Video Call</span>
             </div>
-            <div id="subtitleWrapper">
-            <div id="subtitleBox"></div>
-            
-            
+            <span id="callState"></span>
+            <div id="videoContainer">
+                <div id="incomingUI" style="display:none;">
+                    <p>📞 Incoming Call...</p>
+                    <button onclick="acceptCall()">✅ Accept</button>
+                    <button onclick="declineCall()">❌ Decline</button>
+                </div>
+                <div id="subtitleWrapper">
+                    <div id="subtitleBox"></div>
+                </div>
+            </div>
+            <!-- Controls pinned at bottom -->
+            <div id="callControls">
+                <button onclick="toggleMute()">🎤 Mute</button>
+                <button onclick="toggleCamera()">📷 Camera Off</button>
+                <button onclick="endCall()" class="end">🔴 End</button>
+            </div>
         </div>
     </div>
 
-        <!-- ✅ KEEP ONLY ONE -->
-        <div class="call-actions">
+    <!-- ===== VOICE TRANSLATOR PANEL ===== -->
+    <div class="voice-box">
 
-            <!-- Incoming Call UI -->
-        
+        <!-- Scrollable top section -->
+        <div class="voice-box-content">
+            <h2>🎙️ Voice Translator</h2>
 
-            <!-- Call Controls -->
-            
-            
+            <div>
+                <label>Input Language</label>
+                <select id="inputLang">
+                    <option value="en-US">English</option>
+                    <option value="hi-IN">Hindi</option>
+                    <option value="es-ES">Spanish</option>
+                    <option value="fr-FR">French</option>
+                    <option value="de-DE">German</option>
+                    <option value="zh-CN">Chinese</option>
+                    <option value="ar-SA">Arabic</option>
+                    <option value="pt-BR">Portuguese</option>
+                    <option value="ru-RU">Russian</option>
+                    <option value="ja-JP">Japanese</option>
+                    <option value="ko-KR">Korean</option>
+                </select>
+            </div>
 
-    <div id="callControls">
-        <button onclick="toggleMute()">🎤 Mute</button>
-        <button onclick="toggleCamera()">📷 Camera Off</button>
-        <button onclick="endCall()" class="end">🔴 End</button>
-    </div>
-    
+            <div>
+                <label>Output Language</label>
+                <select id="outputLang">
+                    <option value="en">English</option>
+                    <option value="hi">Hindi</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="zh">Chinese</option>
+                    <option value="ar">Arabic</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="ru">Russian</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                </select>
+            </div>
 
+            <button id="startSpeaking">🎙️ Start Speaking</button>
 
-
+            <p id="inputText"><b>Input:</b> </p>
+            <p id="outputText"><b>Output:</b> </p>
         </div>
 
-       </div>
+        <!-- Camera pinned to bottom -->
+        <div class="voice-box-footer">
+            <label>Your Camera</label>
+            <video id="localVideo" autoplay muted playsinline></video>
+        </div>
+
+    </div>
+
 </div>
-
-    <!-- RIGHT SIDE → VOICE TRANSLATOR -->
-    <div class="voice-box" id="translatorRight">
-
-        <h2>🎤 Voice Translator</h2>
-
-        <div>
-            <label>Input Language:</label>
-            <select id="inputLang">
-                <option value="en-US">English</option>
-                <option value="hi-IN">Hindi</option>
-                <option value="es-ES">Spanish</option>
-                <option value="fr-FR">French</option>
-                <option value="de-DE">German</option>
-                <option value="ja-JP">Japanese</option>
-                <option value="zh-CN">Chinese</option>
-            </select>
-        </div>
-
-        <div>
-            <label>Output Language:</label>
-            <select id="outputLang">
-                <option value="en">English</option>
-                <option value="hi">Hindi</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
-                <option value="ja">Japanese</option>
-                <option value="zh-cn">Chinese</option>
-            </select>
-        </div>
-
-        <button onclick="start()">Start Speaking</button>
-
-        <p><b>Input:</b> <span id="input"></span></p>
-        <p><b>Output:</b> <span id="output"></span></p>
-
-    </div>
-
-</div>
-
-
-<!-- Floating local video -->
-<video id="localVideo" autoplay muted></video>
-
 
 <script src="https://multilagual.onrender.com/socket.io/socket.io.js"></script>
 <script src="voice.js"></script>
