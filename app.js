@@ -1,253 +1,225 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const translate = require("translate-google");
-const sequelize = require("./connection/dbconnection");
-const cors = require("cors");
-let rooms = {};   // store roomId → password
-
-require("./models/users");
-const User = require("./models/users");
-
-const app = express();
-const server = http.createServer(app);
-
-// ================= SOCKET =================
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
-
-app.use(cors());
-app.use(express.json());
-app.use(express.static(__dirname));
-
-// ================= DB =================
-(async () => {
-    try {
-        await sequelize.authenticate();
-        console.log("✅ Database connected");
-    } catch (err) {
-        console.log("❌ DB Error:", err.message);
-    }
-})();
-
-// ================= AUTH =================
-app.post("/signup", async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: "All fields required" });
-        }
-
-        const exists = await User.findOne({ where: { email } });
-
-        if (exists) {
-            return res.status(409).json({ message: "User exists" });
-        }
-
-        const user = await User.create({ name, email, password });
-
-        res.status(201).json({
-            message: "Signup success",
-            name: user.name
-        });
-
-    } catch (err) {
-        console.log("Signup Error:", err);
-        res.status(500).json({ message: "Server error" });
-    }
-});
-
-app.post("/login", async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        const user = await User.findOne({ where: { email } });
-
-        if (!user) return res.status(404).json({ message: "User not found" });
-
-        if (user.password !== password) {
-            return res.status(401).json({ message: "Wrong password" });
-        }
-
-        res.json({
-            message: "Login success",
-            name: user.name
-        });
-
-    } catch (err) {
-        console.log("Login Error:", err);
-        res.status(500).json({ message: "Server error" });
-    }
-});
-
-// ================= TRANSLATE =================
-app.post("/translate", async (req, res) => {
-    const { text, target } = req.body;
-
-    try {
-        const translated = await translate(text, { to: target });
-        res.json({ translated });
-    } catch (err) {
-        console.log("Translation error:", err);
-        res.status(500).json({ error: "Translation failed" });
-    }
-});
-
-// ================= SOCKET LOGIC =================
-let users = {}; // email -> socketId
+let users = {};
+let rooms = {};
 
 io.on("connection", (socket) => {
 
-    console.log("🔵 User connected:", socket.id);
+    console.log("🔵 Connected:", socket.id);
 
-    // ================= REGISTER =================
+    // =========================
+    // REGISTER USER
+    // =========================
+
     socket.on("register", (email) => {
+
         if (!email) return;
 
         users[email] = socket.id;
-        console.log("✅ Registered:", email, "=>", socket.id);
+
+        socket.email = email;
+
+        console.log("Registered:", email, socket.id);
     });
 
-    // ================= CALL (1-to-1) =================
+    // =========================
+    // ONE TO ONE CALL
+    // =========================
+
     socket.on("call-user", ({ to, offer }) => {
 
         const targetSocket = users[to];
 
-        if (targetSocket) {
-            io.to(targetSocket).emit("incoming-call", {
-                from: socket.id,
-                offer
-            });
+        if (!targetSocket) return;
 
-            socket.emit("user-found", { socketId: targetSocket });
-        }
+        io.to(targetSocket).emit("incoming-call", {
+            from: socket.id,
+            offer
+        });
+
+        io.to(socket.id).emit("user-found", {
+            socketId: targetSocket
+        });
     });
 
     socket.on("answer-call", ({ to, answer }) => {
-        io.to(to).emit("call-answered", { answer });
+
+        io.to(to).emit("call-answered", {
+            answer
+        });
     });
 
     socket.on("ice-candidate", ({ to, candidate }) => {
-        io.to(to).emit("ice-candidate", { candidate });
+
+        io.to(to).emit("ice-candidate", {
+            candidate
+        });
     });
 
-    // ================= 1-to-1 TRANSLATION =================
-    socket.on("send-translation", ({ to, text, lang }) => {
-        io.to(to).emit("receive-translation", { text, lang });
+    socket.on("call-declined", ({ to }) => {
+
+        io.to(to).emit("call-declined");
     });
 
-    // ================= ROOM JOIN =================
+    // =========================
+    // CREATE ROOM
+    // =========================
+
+    socket.on("create-room", ({ roomId, password }) => {
+
+        rooms[roomId] = {
+            password: password || null,
+            users: []
+        };
+
+        console.log("Room created:", roomId);
+    });
+
+    // =========================
+    // JOIN ROOM
+    // =========================
+
     socket.on("join-room", ({ roomId, password, user }) => {
 
-    if (!rooms.hasOwnProperty(roomId)) {
-        socket.emit("join-error", "Room does not exist");
-        return;
-    }
+        const room = rooms[roomId];
 
-    const roomPass = rooms[roomId];
+        if (!room) {
 
-    if (roomPass && roomPass !== password) {
-        socket.emit("join-error", "Wrong password");
-        return;
-    }
+            socket.emit("join-error", "Room does not exist");
 
-    socket.join(roomId);
+            return;
+        }
 
-    console.log(user + " joined room:", roomId);
+        if (
+            room.password &&
+            room.password !== password
+        ) {
 
-    socket.to(roomId).emit("user-joined", {
-        socketId: socket.id
+            socket.emit("join-error", "Wrong password");
+
+            return;
+        }
+
+        socket.join(roomId);
+
+        socket.roomId = roomId;
+
+        room.users.push(socket.id);
+
+        console.log(user + " joined room:", roomId);
+
+        // tell old users
+        socket.to(roomId).emit("user-joined", {
+            socketId: socket.id
+        });
+
+        // tell new user existing users
+        room.users.forEach(id => {
+
+            if (id !== socket.id) {
+
+                socket.emit("user-joined", {
+                    socketId: id
+                });
+            }
+        });
+
+        socket.emit("join-success", roomId);
     });
 
-    socket.emit("join-success", roomId);
-});
+    // =========================
+    // ROOM OFFER
+    // =========================
 
-    // ================= ROOM TRANSLATION =================
-    socket.on("send-translation-room", ({ roomId, text, lang }) => {
-        socket.to(roomId).emit("receive-translation", { text, lang });
-    });
-
-    // ================= ROOM WEBRTC =================
     socket.on("room-offer", ({ to, offer }) => {
+
         io.to(to).emit("room-offer", {
             from: socket.id,
             offer
         });
     });
 
+    // =========================
+    // ROOM ANSWER
+    // =========================
+
     socket.on("room-answer", ({ to, answer }) => {
+
         io.to(to).emit("room-answer", {
             from: socket.id,
             answer
         });
     });
 
+    // =========================
+    // ROOM ICE
+    // =========================
+
     socket.on("room-ice", ({ to, candidate }) => {
+
         io.to(to).emit("room-ice", {
             from: socket.id,
             candidate
         });
     });
 
-    socket.on("create-room", ({ roomId, password }) => {
-    rooms[roomId] = password || null;
-    console.log("Room created:", roomId, "Pass:", password);
-});
+    // =========================
+    // TRANSLATION
+    // =========================
 
-socket.on("join-room", ({ roomId, password, user }) => {
+    socket.on("send-translation", ({ to, text, lang }) => {
 
-    if (!rooms.hasOwnProperty(roomId)) {
-        socket.emit("join-error", "Room does not exist");
-        return;
-    }
-
-    const roomPass = rooms[roomId];
-
-    if (roomPass && roomPass !== password) {
-        socket.emit("join-error", "Wrong password");
-        return;
-    }
-
-    socket.join(roomId);
-
-    console.log(user + " joined room:", roomId);
-
-    socket.to(roomId).emit("user-joined", {
-        socketId: socket.id
+        io.to(to).emit("receive-translation", {
+            text,
+            lang
+        });
     });
 
-    socket.emit("join-success", roomId);
-});
+    socket.on("send-translation-room", ({ roomId, text, lang }) => {
 
-    // ================= DISCONNECT =================
+        socket.to(roomId).emit("receive-translation", {
+            text,
+            lang
+        });
+    });
+
+    // =========================
+    // DISCONNECT
+    // =========================
+
     socket.on("disconnect", () => {
 
-        console.log("🔴 Disconnected:", socket.id);
+        console.log("Disconnected:", socket.id);
 
         // remove user
         for (let email in users) {
+
             if (users[email] === socket.id) {
+
                 delete users[email];
             }
         }
 
-        // notify room users
-        socket.rooms.forEach(room => {
-            if (room !== socket.id) {
-                socket.to(room).emit("user-left", {
-                    socketId: socket.id
-                });
-            }
-        });
-    });
-});
+        // remove from room
+        if (
+            socket.roomId &&
+            rooms[socket.roomId]
+        ) {
 
-// ================= START =================
-server.listen(3000, () => {
-    console.log("Server running on port 3000");
+            rooms[socket.roomId].users =
+                rooms[socket.roomId].users.filter(
+                    id => id !== socket.id
+                );
+
+            socket.to(socket.roomId).emit("user-left", {
+                socketId: socket.id
+            });
+
+            // delete empty room
+            if (
+                rooms[socket.roomId].users.length === 0
+            ) {
+
+                delete rooms[socket.roomId];
+            }
+        }
+    });
 });

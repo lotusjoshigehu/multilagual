@@ -19,9 +19,9 @@ document.getElementById("signupForm").addEventListener("submit", async e => {
             return;
         }
 
+        
         if (res.ok) {
 
-            // 🔥 DO NOT SAVE USER HERE
             localStorage.removeItem("user");
 
             alert("Signup successful");

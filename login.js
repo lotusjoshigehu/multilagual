@@ -15,10 +15,8 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
 
         if (res.ok) {
 
-            // 🔥 1. CLEAR EVERYTHING (VERY IMPORTANT)
             localStorage.clear();
 
-            // 🔥 2. SAVE ONLY ONE USER OBJECT
             const user = {
                 name: data.name || email.split("@")[0],
                 email: email
@@ -26,7 +24,6 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
 
             localStorage.setItem("user", JSON.stringify(user));
 
-            // 🔥 3. REDIRECT
             window.location.href = "voice.html";
 
         } else {

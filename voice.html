@@ -7,22 +7,18 @@
 </head>
 <body>
 
-<!-- TOGGLE always on top -->
 <button id="menuToggle">☰</button>
 
-<!-- ════════════════════════════════
-     OVERLAY PAGES (full-screen)
-════════════════════════════════ -->
 
 <div id="home" class="overlay-page">
     <div class="home-container">
-        <h1>JOJO Voice Translator</h1>
+        <h1>Multilingual Voice Translator</h1>
         <p class="tagline">Real-time voice translation with live subtitles and video calling</p>
         <div class="features">
-            <div class="feature-card"><h3>🌐 Real-Time Translation</h3><p>Speak and instantly translate into another language.</p></div>
-            <div class="feature-card"><h3>💬 Live Subtitles</h3><p>See translated subtitles during your conversations.</p></div>
-            <div class="feature-card"><h3>📹 Video Calling</h3><p>Talk face-to-face with live translation enabled.</p></div>
-            <div class="feature-card"><h3>🌍 Multi-Language</h3><p>Supports English, Hindi, Spanish, French and more.</p></div>
+            <div class="feature-card"><h3>Real-Time Translation</h3><p>Speak and instantly translate into another language.</p></div>
+            <div class="feature-card"><h3>Live Subtitles</h3><p>See translated subtitles during your conversations.</p></div>
+            <div class="feature-card"><h3>Video Calling</h3><p>Talk face-to-face with live translation enabled.</p></div>
+            <div class="feature-card"><h3>Multi-Language</h3><p>Supports English, Hindi, Spanish, French and more.</p></div>
         </div>
         <button class="start-btn" onclick="showPage('translator')">Start Translating →</button>
     </div>
@@ -31,55 +27,52 @@
 <div id="meeting" class="overlay-page" style="display:none;">
     <div class="meeting-wrapper">
 
-        <!-- ── CREATE CARD ── -->
         <div class="meeting-card">
-            <h2>➕ Create Meeting</h2>
-            <p class="card-sub">Start a new room and share the details</p>
+            <h2>Create Meeting</h2>
+            <p class="card-sub"></p>
 
             <div class="input-group">
                 <label>Meeting Name</label>
-                <input id="meetingName" placeholder="e.g. Team Standup" />
+                <input id="meetingName"/>
             </div>
             <div class="input-group">
                 <label>Password (optional)</label>
-                <input id="createPassword" type="password" placeholder="Set a password" />
+                <input id="createPassword" type="password"/>
             </div>
 
-            <button onclick="createMeeting()">➕ Create Meeting</button>
+            <button onclick="createMeeting()">Create Meeting</button>
 
-            <!-- Result box — hidden until room is created -->
             <div id="createResult" style="display:none;">
                 <p class="result-label">Share these details:</p>
                 <div class="result-row">
                     <span class="result-tag">Room ID</span>
                     <span id="resultRoomId" class="result-val"></span>
-                    <button class="copy-btn" onclick="copyText('resultRoomId', this)">📋 Copy</button>
+                    <button class="copy-btn" onclick="copyText('resultRoomId', this)">Copy</button>
                 </div>
                 <div class="result-row">
                     <span class="result-tag">Password</span>
                     <span id="resultPassword" class="result-val"></span>
-                    <button class="copy-btn" onclick="copyText('resultPassword', this)">📋 Copy</button>
+                    <button class="copy-btn" onclick="copyText('resultPassword', this)">Copy</button>
                 </div>
             </div>
         </div>
 
         <div class="meeting-divider">OR</div>
 
-        <!-- ── JOIN CARD ── -->
         <div class="meeting-card">
-            <h2>🔗 Join Meeting</h2>
-            <p class="card-sub">Enter room details to join</p>
+            <h2>Join Meeting</h2>
+            <p class="card-sub"></p>
 
             <div class="input-group">
                 <label>Room ID</label>
-                <input id="roomInput" placeholder="Paste Room ID here" />
+                <input id="roomInput"/>
             </div>
             <div class="input-group">
                 <label>Password (optional)</label>
-                <input id="roomPassword" type="password" placeholder="Enter password" />
+                <input id="roomPassword" type="password"/>
             </div>
 
-            <button onclick="joinMeeting()">🔗 Join Meeting</button>
+            <button onclick="joinMeeting()">Join Meeting</button>
             <p id="meetingInfo" class="meeting-info"></p>
         </div>
 
@@ -89,7 +82,7 @@
 <div id="settings" class="overlay-page" style="display:none;">
     <div class="settings-container">
         <p id="welcomeUser"></p>
-        <h2>⚙️ Profile Settings</h2>
+        <h2>Profile Settings</h2>
         <div class="profile-box">
             <img id="profilePic" src="default.png" alt="Profile">
             <input type="file" id="uploadPic">
@@ -98,23 +91,20 @@
         <div class="input-group"><label>Email</label><input id="emailInput" disabled></div>
         <div class="input-group"><label>Date of Birth</label><input type="date" id="dob"></div>
         <div style="display:flex;gap:12px;margin-top:16px;">
-            <button onclick="saveProfile()">💾 Save</button>
-            <button onclick="logout()" class="logout-btn">🚪 Logout</button>
+            <button onclick="saveProfile()">Save</button>
+            <button onclick="logout()" class="logout-btn">Logout</button>
         </div>
     </div>
 </div>
 
-<!-- ════════════════════════════════
-     MAIN APP (sidebar + video + panel)
-════════════════════════════════ -->
 <div class="main-container" id="mainApp">
 
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-logo">JOJO</div>
-        <button onclick="showPage('home')">🏠 Home</button>
-        <button onclick="showPage('meeting')">📹 Meeting</button>
-        <button onclick="showPage('translator')">🎤 Translator</button>
-        <button onclick="showPage('settings')">⚙️ Settings</button>
+        <div class="sidebar-logo"></div>
+        <button onclick="showPage('home')">Home</button>
+        <button onclick="showPage('meeting')">Meeting</button>
+        <button onclick="showPage('translator')">Translator</button>
+        <button onclick="showPage('settings')">Settings</button>
     </div>
 
     <div class="video-section" id="translatorLeft">
@@ -124,30 +114,22 @@
             </div>
             <span id="callState"></span>
             <div id="videoContainer">
-                <div id="incomingUI" style="display:none;">
-                    <p>📞 Incoming Call...</p>
-                    <button onclick="acceptCall()">✅ Accept</button>
-                    <button onclick="declineCall()">❌ Decline</button>
-                </div>
                 <div id="subtitleWrapper">
                     <div id="subtitleBox"></div>
                 </div>
             </div>
-            <!-- Controls pinned at bottom -->
             <div id="callControls">
-                <button onclick="toggleMute()">🎤 Mute</button>
-                <button onclick="toggleCamera()">📷 Camera Off</button>
-                <button onclick="endCall()" class="end">🔴 End</button>
+                <button onclick="toggleMute()">Mute</button>
+                <button onclick="toggleCamera()">Camera Off</button>
+                <button onclick="endCall()" class="end">End</button>
             </div>
         </div>
     </div>
 
-    <!-- ===== VOICE TRANSLATOR PANEL ===== -->
     <div class="voice-box">
 
-        <!-- Scrollable top section -->
         <div class="voice-box-content">
-            <h2>🎙️ Voice Translator</h2>
+            <h2>Voice Translator</h2>
 
             <div>
                 <label>Input Language</label>
@@ -183,13 +165,12 @@
                 </select>
             </div>
 
-            <button id="startSpeaking">🎙️ Start Speaking</button>
+            <button id="startSpeaking">Start Speaking</button>
 
             <p id="inputText"><b>Input:</b> </p>
             <p id="outputText"><b>Output:</b> </p>
         </div>
 
-        <!-- Camera pinned to bottom -->
         <div class="voice-box-footer">
             <label>Your Camera</label>
             <video id="localVideo" autoplay muted playsinline></video>
