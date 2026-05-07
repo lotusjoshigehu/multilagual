@@ -11,24 +11,6 @@ let user = JSON.parse(localStorage.getItem("user"));
 let currentRoom = null;
 let isListening = false;
 
-// ✅ Fetch real TURN credentials from your backend (keeps secret key safe)
-async function getIceConfig() {
-    try {
-        const res = await fetch("https://multilagual.onrender.com/get-turn-credentials");
-        const iceServers = await res.json();
-        console.log("ICE servers loaded:", iceServers.length, "servers");
-        return { iceServers, iceCandidatePoolSize: 10 };
-    } catch (err) {
-        console.warn("Failed to fetch TURN credentials, using STUN only:", err);
-        return {
-            iceServers: [
-                { urls: "stun:stun.l.google.com:19302" },
-                { urls: "stun:stun1.l.google.com:19302" }
-            ]
-        };
-    }
-}
-
 function start() {
     const inputLang = document.getElementById("inputLang").value;
     recognition.lang = inputLang || "en-US";
@@ -44,6 +26,7 @@ function showSubtitle(text, isLocal = true) {
         </div>
     `;
 }
+
 
 recognition.onresult = function(event) {
     let text = event.results[event.results.length - 1][0].transcript.trim();
@@ -76,10 +59,11 @@ async function processSentence(text) {
     try {
         const res = await fetch("https://multilagual.onrender.com/translate", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify({ text, target })
         });
         const data = await res.json();
+    
         document.getElementById("outputText").innerText = data.translated;
         if (currentRoom) {
             socket.emit("send-translation-room", {
@@ -174,9 +158,9 @@ async function initVideo() {
         localStream = await navigator.mediaDevices.getUserMedia({
             video: true,
             audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true,
+                echoCancellation: true,   
+                noiseSuppression: true,   
+                autoGainControl: true,    
                 sampleRate: 48000
             }
         });
@@ -196,28 +180,27 @@ initVideo();
 async function startCall() {
     if (!localStream) { alert("Camera not ready"); return; }
     const targetEmail = document.getElementById("targetEmail").value;
-    if (!targetEmail) { alert("Enter target email"); return; }
-
     document.getElementById("callState").innerText = "Calling...";
     document.getElementById("callTitle").style.display = "none";
-    document.getElementById("callSetup").style.display = "none";
-    document.getElementById("callControls").style.display = "flex";
+    if (!targetEmail) { alert("Enter target email"); return; }
 
-    const iceConfig = await getIceConfig();
-    peer = new RTCPeerConnection(iceConfig);
+    document.getElementById("callSetup").style.display = "none";
+    const controls = document.getElementById("callControls");
+    controls.style.display = "flex";
+
+    peer = new RTCPeerConnection({
+        iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+            { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
+        ]
+    });
 
     localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
     peer.ontrack = (event) => addRemoteVideo(event.streams[0], "remoteVideo");
     peer.onicecandidate = (event) => {
         if (event.candidate && targetSocketId) {
             socket.emit("ice-candidate", { to: targetSocketId, candidate: event.candidate });
-        }
-    };
-    peer.oniceconnectionstatechange = () => {
-        console.log("ICE state (startCall):", peer.iceConnectionState);
-        if (peer.iceConnectionState === "failed") {
-            console.warn("ICE failed — restarting");
-            peer.restartIce();
         }
     };
 
@@ -227,24 +210,19 @@ async function startCall() {
 }
 
 
-// ✅ Always reassign srcObject, wait for metadata before play()
 function addRemoteVideo(stream, id) {
-    let video = document.getElementById(id);
-    if (!video) {
-        video = document.createElement("video");
-        video.id = id;
-        video.autoplay = true;
-        video.playsInline = true;
-        video.muted = false;
-        video.className = "remote-video";
-        document.getElementById("videoContainer").appendChild(video);
-    }
-    video.pause();
-    video.srcObject = null;
-    video.srcObject = stream;
-    video.onloadedmetadata = () => {
-        video.play().catch(e => console.warn("Video play error:", e));
-    };
+    if (document.getElementById(id)) return;
+    const video = document.createElement("video");
+    video.id = id;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.muted = false;
+    video.className = "remote-video";
+    document.getElementById("videoContainer").appendChild(video);
+    setTimeout(() => {
+        video.srcObject = stream;
+        video.play().catch(() => {});
+    }, 100);
 }
 
 
@@ -254,7 +232,7 @@ socket.on("user-found", ({ socketId }) => {
 
 socket.on("room-offer", async ({ from, offer }) => {
     if (peers[from]) return;
-    const newPeer = await createPeer(from);
+    const newPeer = createPeer(from);
     peers[from] = newPeer;
     localStream.getTracks().forEach(track => newPeer.addTrack(track, localStream));
     await newPeer.setRemoteDescription(new RTCSessionDescription(offer));
@@ -281,7 +259,7 @@ socket.on("incoming-call", ({ from, offer }) => {
 
 socket.on("user-joined", async ({ socketId }) => {
     if (peers[socketId]) return;
-    const newPeer = await createPeer(socketId);
+    const newPeer = createPeer(socketId);
     peers[socketId] = newPeer;
     localStream.getTracks().forEach(track => newPeer.addTrack(track, localStream));
     const offer = await newPeer.createOffer();
@@ -297,24 +275,24 @@ async function acceptCall() {
     document.getElementById("callState").innerText = "Connected";
     document.getElementById("callSetup").style.display = "none";
     document.getElementById("callTitle").style.display = "none";
-    document.getElementById("callControls").style.display = "flex";
+
+    const controls = document.getElementById("callControls");
+    controls.style.display = "flex";
 
     targetSocketId = incomingFrom;
 
-    const iceConfig = await getIceConfig();
-    peer = new RTCPeerConnection(iceConfig);
+    peer = new RTCPeerConnection({
+        iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+            { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
+        ]
+    });
 
     localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
     peer.ontrack = (event) => addRemoteVideo(event.streams[0], "remoteVideo");
     peer.onicecandidate = (event) => {
         if (event.candidate) socket.emit("ice-candidate", { to: incomingFrom, candidate: event.candidate });
-    };
-    peer.oniceconnectionstatechange = () => {
-        console.log("ICE state (acceptCall):", peer.iceConnectionState);
-        if (peer.iceConnectionState === "failed") {
-            console.warn("ICE failed — restarting");
-            peer.restartIce();
-        }
     };
 
     await peer.setRemoteDescription(new RTCSessionDescription(incomingOffer));
@@ -326,16 +304,16 @@ async function acceptCall() {
 
 function declineCall() {
     document.getElementById("incomingUI").style.display = "none";
-    document.getElementById("callSetup").style.display = "flex";
+    const setup = document.getElementById("callSetup");
+    setup.style.display = "flex";
     document.getElementById("callState").innerText = "";
     socket.emit("call-declined", { to: incomingFrom });
 }
 
-// ✅ createPeer is now async — fetches real TURN credentials
-async function createPeer(socketId) {
-    const iceConfig = await getIceConfig();
-    const peer = new RTCPeerConnection(iceConfig);
-
+function createPeer(socketId) {
+    const peer = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    });
     peer.ontrack = (event) => {
         const stream = event.streams[0];
         if (stream.id === localStream.id) return;
@@ -344,14 +322,6 @@ async function createPeer(socketId) {
     peer.onicecandidate = (event) => {
         if (event.candidate) socket.emit("room-ice", { to: socketId, candidate: event.candidate });
     };
-    peer.oniceconnectionstatechange = () => {
-        console.log(`ICE state (peer ${socketId}):`, peer.iceConnectionState);
-        if (peer.iceConnectionState === "failed") {
-            console.warn("ICE failed — restarting for", socketId);
-            peer.restartIce();
-        }
-    };
-
     return peer;
 }
 
