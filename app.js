@@ -94,6 +94,28 @@ app.post("/translate", async (req, res) => {
 });
 
 // =========================
+// TURN CREDENTIALS
+// Secret key stays on the server — never exposed to frontend
+// =========================
+
+app.get("/get-turn-credentials", async (req, res) => {
+    try {
+        const response = await fetch(
+            "https://multilangual.metered.live/api/v1/turn/credentials?apiKey=U6J8u9BWAFpIutTwp5hr-MCZzQa4amCY5f7dxCWQ82t0DGRW"
+        );
+        const iceServers = await response.json();
+        res.json(iceServers);
+    } catch (err) {
+        console.log("TURN credentials error:", err);
+        // Fallback to STUN only if TURN fetch fails
+        res.json([
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" }
+        ]);
+    }
+});
+
+// =========================
 // SOCKET STORAGE
 // =========================
 
@@ -159,10 +181,6 @@ io.on("connection", (socket) => {
 
     // =========================
     // JOIN ROOM
-    // ─────────────────────────
-    // FIX: Only the EXISTING users create offers to the NEW user.
-    // The new user does NOT create offers — it only responds (answers).
-    // This prevents both sides creating offers simultaneously (collision).
     // =========================
 
     socket.on("join-room", ({ roomId, password, user }) => {
@@ -181,14 +199,10 @@ io.on("connection", (socket) => {
         socket.join(roomId);
         socket.roomId = roomId;
 
-        // Tell the NEW user who is already in the room
-        // so the NEW user can prepare to RECEIVE offers (not send them)
         room.users.forEach(existingId => {
             socket.emit("existing-user", { socketId: existingId });
         });
 
-        // Tell EXISTING users about the new user
-        // so EXISTING users create and send offers TO the new user
         socket.to(roomId).emit("user-joined", {
             socketId: socket.id
         });
